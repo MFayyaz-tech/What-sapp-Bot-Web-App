@@ -5,14 +5,14 @@ const sendEmail = async (email, otp) => {
     process.env.MAILHOST,
     process.env.MAILPORT,
     process.env.MAIL,
-    process.env.MAIL
+    process.env.MAILPASS
   );
   var transporter = nodemailer.createTransport({
     host: process.env.MAILHOST,
     port: process.env.MAILPORT,
     service: "gmail", // Use your specific service, if not Gmail
     auth: {
-      user: process.env.MAIL, // Your email address
+      user: "taxwakeels@gmail.com", // Your email address
       pass: process.env.MAILPASS, // Your email password (or App Password)
     },
     tls: {
@@ -21,7 +21,7 @@ const sendEmail = async (email, otp) => {
   });
 
   var mailOptions = {
-    from: process.env.MAIL, // Sender address
+    from: "taxwakeels@gmail.com", // Sender address
     to: email, // Recipient address
     subject: "What's Bot OTP",
     text: `Your what's app bot OTP is ${otp}`,

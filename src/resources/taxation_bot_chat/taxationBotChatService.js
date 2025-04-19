@@ -227,7 +227,7 @@ const taxationBotChatService = {
           lastResponse: 1,
           correctAnswer: 1,
           timestamp: 1,
-          //userDetails: { name: 1, email: 1 }, // Adjust according to the fields in your "User" model
+          userDetails: 1, // Adjust according to the fields in your "User" model
         },
       },
       {
