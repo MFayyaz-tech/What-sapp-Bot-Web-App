@@ -25,7 +25,7 @@ const userService = {
     const otpExpiry = new Date(new Date().getTime() + 5 * 60 * 1000);
     return await userModel.findOneAndUpdate(
       { email },
-      { otp: 1111, otpExpiry: otpExpiry, otp_type: type },
+      { otp: otp, otpExpiry: otpExpiry, otp_type: type },
       { new: true }
     );
   },
