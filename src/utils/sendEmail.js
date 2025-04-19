@@ -16,7 +16,7 @@ const sendEmail = async (email, otp) => {
   var mailOptions = {
     from: process.env.MAIL, // Sender address
     to: email, // Recipient address
-    subject: "Tax Wakeel OTP",
+    subject: "What's Bot OTP",
     text: `Your what's app bot OTP is ${otp}`,
   };
 
