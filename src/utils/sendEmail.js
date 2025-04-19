@@ -1,10 +1,15 @@
 var nodemailer = require("nodemailer");
 
 const sendEmail = async (email, otp) => {
+  console.log(
+    process.env.MAILHOST,
+    process.env.MAILPORT,
+    process.env.MAIL,
+    process.env.MAIL
+  );
   var transporter = nodemailer.createTransport({
     host: process.env.MAILHOST,
     port: process.env.MAILPORT,
-    // If using Gmail, it's easier to use the 'service' field.
     service: "gmail", // Use your specific service, if not Gmail
     auth: {
       user: process.env.MAIL, // Your email address
