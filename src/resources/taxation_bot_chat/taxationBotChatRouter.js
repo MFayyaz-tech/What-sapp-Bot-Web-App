@@ -11,4 +11,9 @@ taxationBotChatRouter.route("/user").get(authAdmin, controller.getUserChats);
 taxationBotChatRouter.route("/userlist").get(authAdmin, controller.userList);
 taxationBotChatRouter.route("/user").patch(authAdmin, controller.updateUser);
 
+taxationBotChatRouter
+  .route("/states")
+  .get(authAdmin, controller.dashboardStates);
+taxationBotChatRouter.route("/graph").get(authAdmin, controller.graphStates);
+
 module.exports = taxationBotChatRouter;

@@ -1,7 +1,82 @@
 const { default: axios } = require("axios");
 const chatModel = require("./taxationBotChatModel");
 const appUserModel = require("./appUserModel");
+const errorModel = require("./errorModel");
 const taxationBotChatService = {
+  dashboardStates: async () => {
+    // Total Queries
+    const totalQueries = await chatModel.countDocuments();
+
+    // Active Users
+    const activeUsers = await appUserModel.countDocuments({
+      "engagement.oldUser": true,
+    });
+
+    // Success Rate
+    const totalChats = await chatModel.countDocuments();
+    const totalError = await errorModel.countDocuments();
+    const uptimePercentage =
+      totalError === 0 ? 100 : ((totalChats - totalError) / totalChats) * 100;
+
+    const correctChats = await chatModel.countDocuments({
+      correctAnswer: true,
+    });
+    const successRate =
+      totalChats === 0 ? 0 : (correctChats / totalChats) * 100;
+
+    // System Health (Error Logs)
+    const errorLogs = await errorModel.countDocuments();
+    const systemHealth = errorLogs === 0 ? "healthy" : "issues detected";
+
+    // User Engagement (New vs Old Users)
+    const newUserCount = await appUserModel.countDocuments({
+      "engagement.newUser": true,
+    });
+    const oldUserCount = await appUserModel.countDocuments({
+      "engagement.oldUser": true,
+    });
+
+    const errorLogsList = await errorModel
+      .find({
+        severity: { $in: ["Medium", "High"] },
+      })
+      .sort({ timestamp: -1 })
+      .limit(5);
+
+    const lastDownTime = await errorModel
+      .find({})
+      .limit(1)
+      .sort({ createAt: -1 });
+
+    const avgResponse = await chatModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          avgResponseTime: { $avg: "$responseTime" },
+        },
+      },
+    ]);
+
+    const averageResponseTime = avgResponse[0]?.avgResponseTime || 0;
+
+    const chatLogs = await chatModel.find().sort({ timestamp: -1 }).limit(5);
+
+    return {
+      totalQueries,
+      activeUsers,
+      successRate,
+      systemHealth,
+      uptimePercentage,
+      averageResponseTime,
+      lastDownTime: lastDownTime[0]?.timestamp,
+      userEngagement: {
+        newUsers: newUserCount,
+        oldUsers: oldUserCount,
+      },
+      errorLogsList,
+      chatLogs,
+    };
+  },
   updateUser: async (user, status) => {
     return await appUserModel.findOneAndUpdate(
       { _id: user },
@@ -246,5 +321,54 @@ const taxationBotChatService = {
 
     return chatList;
   },
+  getMonthlyQueries: async (year) => {
+    const result = await chatModel.aggregate([
+      // Match documents that belong to the specified year
+      {
+        $match: {
+          timestamp: {
+            $gte: new Date(`${year}-01-01T00:00:00.000Z`), // Start of the year
+            $lt: new Date(`${year + 1}-01-01T00:00:00.000Z`), // Start of the next year
+          },
+        },
+      },
+      // Group by month and count total queries
+      {
+        $group: {
+          _id: {
+            month: { $month: "$timestamp" },
+            year: { $year: "$timestamp" },
+          },
+          totalQueries: { $sum: 1 }, // Count total queries
+        },
+      },
+      // Project the result to have month and totalQueries fields
+      {
+        $project: {
+          _id: 0, // Exclude the _id field
+          month: "$_id.month",
+          year: "$_id.year",
+          totalQueries: 1,
+        },
+      },
+      // Sort by month
+      {
+        $sort: { month: 1 },
+      },
+    ]);
+
+    const fullYearData = [];
+    for (let i = 1; i <= 12; i++) {
+      const monthData = result.find((entry) => entry.month === i);
+      fullYearData.push({
+        month: i,
+        year: year,
+        totalQueries: monthData ? monthData.totalQueries : 0,
+      });
+    }
+
+    return fullYearData;
+  },
 };
+
 module.exports = taxationBotChatService;

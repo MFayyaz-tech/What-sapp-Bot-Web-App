@@ -130,4 +130,37 @@ const updateUser = expressAsyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { create, getUserChats, getUsersChats, userList, updateUser };
+const dashboardStates = expressAsyncHandler(async (req, res) => {
+  const users = await taxationBotChatService.dashboardStates();
+  return sendResponse(
+    res,
+    responseStatusCodes.OK,
+    "States Retrieved",
+    true,
+    users,
+    null
+  );
+});
+const graphStates = expressAsyncHandler(async (req, res) => {
+  const users = await taxationBotChatService.getMonthlyQueries(
+    Number(req.query.year)
+  );
+  return sendResponse(
+    res,
+    responseStatusCodes.OK,
+    "States Retrieved",
+    true,
+    users,
+    null
+  );
+});
+
+module.exports = {
+  create,
+  getUserChats,
+  getUsersChats,
+  userList,
+  updateUser,
+  dashboardStates,
+  graphStates,
+};

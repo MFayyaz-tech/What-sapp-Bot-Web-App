@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
     },
+    image: {
+      type: String,
+      default: "",
+    },
     deleted: {
       type: Boolean,
       default: false,

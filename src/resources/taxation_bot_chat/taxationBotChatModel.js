@@ -9,6 +9,7 @@ const chatSchema = new mongoose.Schema(
     response: String,
     correctAnswer: { type: Boolean, default: true },
     timestamp: { type: Date, default: Date.now },
+    response_time: Number,
   },
   { timestamps: true }
 );

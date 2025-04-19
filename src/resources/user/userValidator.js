@@ -16,6 +16,7 @@ const userValidator = {
     phone: Joi.string().optional(),
     country: Joi.string().optional(),
     phone: Joi.string().optional(),
+    image: Joi.string().optional(),
   }),
 };
 module.exports = userValidator;

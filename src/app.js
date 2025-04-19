@@ -34,6 +34,7 @@ app.get("/", (req, res) => {
 
 // WhatsApp Webhook
 app.get("/whatsapp-webhook", (req, res) => {
+  const start = Date.now();
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
@@ -120,10 +121,13 @@ app.post("/whatsapp-webhook", async (req, res) => {
 
           // ✅ Store chat message in MongoDB
           console.log("responseMessage", responseMessage);
+          const end = Date.now();
+          const response_time = end - start;
           const chatEntry = new taxationBotChatModel({
             user: user._id,
             request: receivedMessage,
             response: responseMessage,
+            response_time: response_time,
           });
           await chatEntry.save();
           // ✅ Check environment variables
