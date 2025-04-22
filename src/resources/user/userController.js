@@ -110,24 +110,17 @@ const userController = {
 
   // Get all users route
   getAll: expressAsyncHandler(async (req, res) => {
-    const users = await userService.getAll(
-      req.query.role,
+    const users = await userService.get(
       req.query.page,
-      req.query.recordsPerPage,
-      req.query.isExecutive,
+      req.query.limit,
       req.query.search
-    );
-    const count = await userService.countDocumment(
-      req.query.role,
-      req.query.search,
-      req.query.isExecutive
     );
     return sendResponse(
       res,
       responseStatusCodes.OK,
       "Users",
       true,
-      { users, count },
+      users,
       null
     );
   }),

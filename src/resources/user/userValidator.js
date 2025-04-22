@@ -14,8 +14,7 @@ const userValidator = {
   update: Joi.object({
     name: Joi.string().optional(),
     phone: Joi.string().optional(),
-    country: Joi.string().optional(),
-    phone: Joi.string().optional(),
+    email: Joi.string().optional(),
     image: Joi.string().optional(),
   }),
 };

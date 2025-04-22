@@ -12,6 +12,7 @@ userRouter
 userRouter
   .route("/login")
   .post(validateRequest(userValidator.login), controller.webLogin);
+userRouter.route("/").get(controller.getAll);
 userRouter.post("/requestOtp", controller.sendOtp);
 userRouter.post("/verifyOtp", controller.verifyOtp);
 userRouter.patch("/forgotPassword", controller.forgotPassword);

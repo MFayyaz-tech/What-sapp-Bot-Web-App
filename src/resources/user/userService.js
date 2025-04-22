@@ -1,3 +1,4 @@
+const uploadFile = require("../../utils/uploadFile");
 const userModel = require("./userModel");
 const bcrypt = require("bcrypt");
 const userService = {
@@ -13,6 +14,9 @@ const userService = {
   },
 
   update: async (_id, body) => {
+    if (body.image) {
+      body.image = await uploadFile(body.image);
+    }
     return await userModel.findOneAndUpdate({ _id }, body, { new: true });
   },
   updateFcm: async (email, fcmToken, country) => {
@@ -29,8 +33,18 @@ const userService = {
       { new: true }
     );
   },
-  get: async () => {
-    return await userModel.find({}).sort({ createdAt: -1 });
+  get: async (page = 1, limit = 10, search) => {
+    const result = await userModel
+      .find({})
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+    const total = await userModel.countDocuments();
+    return {
+      total,
+      page,
+      data: result,
+    };
   },
 
   otpExpiryValidation: async (email) => {
