@@ -202,32 +202,108 @@ const taxationBotChatService = {
     };
   },
 
-  usersChats: async (page = 1, limit = 30) => {
+  // usersChats: async (page = 1, limit = 30, search) => {
+  //   const skip = (Number(page) - 1) * Number(limit); // Skip the previous pages
+
+  //   const result = await chatModel.aggregate([
+  //     {
+  //       $sort: { timestamp: -1 }, // Sort by timestamp in descending order (most recent first)
+  //     },
+  //     {
+  //       $group: {
+  //         _id: "$user", // Group by user
+  //         lastRequest: { $first: "$request" }, // Get the last request (most recent one)
+  //         lastResponse: { $first: "$response" }, // Get the last response
+  //         correctAnswer: { $first: "$correctAnswer" }, // Get the correctAnswer flag of the last request
+  //         timestamp: { $first: "$timestamp" }, // Get the timestamp of the last request
+  //       },
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: "appusers", // Join with the "User" collection (replace with your actual collection name if different)
+  //         localField: "_id", // The field in the Chat collection to match
+  //         foreignField: "_id", // The field in the User collection to match
+  //         as: "userDetails", // The alias for the joined data
+  //       },
+  //     },
+  //     {
+  //       $unwind: "$userDetails", // Unwind the user details array to get user info
+  //     },
+  //     {
+  //       $project: {
+  //         user: "$_id", // Rename _id to user
+  //         lastRequest: 1,
+  //         lastResponse: 1,
+  //         correctAnswer: 1,
+  //         timestamp: 1,
+  //         userDetails: 1, // Adjust according to the fields in your "User" model
+  //       },
+  //     },
+  //     {
+  //       $skip: skip, // Skip the previous pages based on the page number
+  //     },
+  //     {
+  //       $limit: Number(limit), // Limit the number of results to the page size
+  //     },
+  //   ]);
+
+  //   const totalUsers = await chatModel.aggregate([
+  //     {
+  //       $group: {
+  //         _id: "$user", // Group by user
+  //       },
+  //     },
+  //     {
+  //       $count: "totalUsers", // Count the total number of unique users
+  //     },
+  //   ]);
+  //   const total = totalUsers.length > 0 ? totalUsers[0].totalUsers : 0;
+
+  //   return {
+  //     total, // Total records
+  //     totalPages: limit ? Math.ceil(total / limit) : 1, // Total pages
+  //     currentPage: page ? parseInt(page) : null,
+  //     data: result,
+  //   };
+  // },
+
+  usersChats: async (page = 1, limit = 30, search) => {
     const skip = (Number(page) - 1) * Number(limit); // Skip the previous pages
 
+    const matchQuery = search
+      ? {
+          "userDetails.userId": { $regex: search, $options: "i" }, // Apply regex search on userId
+        }
+      : {};
+
     const result = await chatModel.aggregate([
-      {
-        $sort: { timestamp: -1 }, // Sort by timestamp in descending order (most recent first)
-      },
+      { $sort: { timestamp: -1 } }, // Sort by timestamp in descending order (most recent first)
       {
         $group: {
           _id: "$user", // Group by user
-          lastRequest: { $first: "$request" }, // Get the last request (most recent one)
-          lastResponse: { $first: "$response" }, // Get the last response
-          correctAnswer: { $first: "$correctAnswer" }, // Get the correctAnswer flag of the last request
-          timestamp: { $first: "$timestamp" }, // Get the timestamp of the last request
+          lastRequest: { $first: "$request" },
+          lastResponse: { $first: "$response" },
+          correctAnswer: { $first: "$correctAnswer" },
+          timestamp: { $first: "$timestamp" },
         },
       },
       {
         $lookup: {
-          from: "appusers", // Join with the "User" collection (replace with your actual collection name if different)
+          from: "appusers", // Join with the "AppUser" collection
           localField: "_id", // The field in the Chat collection to match
-          foreignField: "_id", // The field in the User collection to match
-          as: "userDetails", // The alias for the joined data
+          foreignField: "_id", // The field in the AppUser collection to match
+          as: "userDetails", // Alias for the joined data
         },
       },
       {
-        $unwind: "$userDetails", // Unwind the user details array to get user info
+        $unwind: "$userDetails", // Unwind the userDetails array to get user information
+      },
+      {
+        $match: search
+          ? {
+              "userDetails.userId": { $regex: search, $options: "i" }, // Apply regex search on userId
+            }
+          : {}, // If no search term, don't apply any match filter
       },
       {
         $project: {
@@ -236,34 +312,46 @@ const taxationBotChatService = {
           lastResponse: 1,
           correctAnswer: 1,
           timestamp: 1,
-          userDetails: 1, // Adjust according to the fields in your "User" model
+          userDetails: 1, // Include user details in the projection
+        },
+      },
+      { $skip: skip }, // Skip the documents for the current page
+      { $limit: Number(limit) }, // Limit the number of results to the specified limit
+    ]);
+
+    // Calculate total number of unique users matching the search query
+    const totalUsers = await chatModel.aggregate([
+      {
+        $lookup: {
+          from: "appusers", // Join with the "AppUser" collection
+          localField: "user", // Match the user field in the Chat collection
+          foreignField: "_id", // Match the _id field in the AppUser collection
+          as: "userDetails",
         },
       },
       {
-        $skip: skip, // Skip the previous pages based on the page number
+        $unwind: "$userDetails", // Unwind the userDetails to access user data
       },
       {
-        $limit: Number(limit), // Limit the number of results to the page size
+        $match: matchQuery, // Apply the search filter on userId here as well
       },
-    ]);
-
-    const totalUsers = await chatModel.aggregate([
       {
         $group: {
-          _id: "$user", // Group by user
+          _id: "$user", // Group by user to count distinct users
         },
       },
       {
         $count: "totalUsers", // Count the total number of unique users
       },
     ]);
+
     const total = totalUsers.length > 0 ? totalUsers[0].totalUsers : 0;
 
     return {
-      total, // Total records
+      total, // Total records (filtered by search query)
       totalPages: limit ? Math.ceil(total / limit) : 1, // Total pages
-      currentPage: page ? parseInt(page) : null,
-      data: result,
+      currentPage: page ? parseInt(page) : null, // Current page number
+      data: result, // Resulting data
     };
   },
 

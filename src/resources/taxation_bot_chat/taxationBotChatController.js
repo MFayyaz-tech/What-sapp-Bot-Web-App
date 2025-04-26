@@ -78,7 +78,8 @@ const getUsersChats = expressAsyncHandler(async (req, res) => {
   const chats = await taxationBotChatService.usersChats(
     req.query.user,
     req.query.page,
-    req.query.limit
+    req.query.limit,
+    req.query.search
   );
   return sendResponse(
     res,
