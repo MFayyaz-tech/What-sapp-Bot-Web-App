@@ -257,6 +257,7 @@ const taxationBotChatService = {
   //       $count: "totalUsers", // Count the total number of unique users
   //     },
   //   ]);
+
   //   const total = totalUsers.length > 0 ? totalUsers[0].totalUsers : 0;
 
   //   return {
@@ -270,12 +271,13 @@ const taxationBotChatService = {
   usersChats: async (page = 1, limit = 30, search) => {
     const skip = (Number(page) - 1) * Number(limit); // Skip the previous pages
 
+    // Prepare the match query for search (if search is provided)
     const matchQuery = search
       ? {
-          "userDetails.userId": { $regex: search, $options: "i" }, // Apply regex search on userId
+          "userDetails.username": { $regex: search, $options: "i" }, // Apply regex search on userId
         }
-      : {};
-
+      : {}; // If no search, don't apply any match filter
+    console.log("matchQuery", matchQuery);
     const result = await chatModel.aggregate([
       { $sort: { timestamp: -1 } }, // Sort by timestamp in descending order (most recent first)
       {
@@ -299,11 +301,7 @@ const taxationBotChatService = {
         $unwind: "$userDetails", // Unwind the userDetails array to get user information
       },
       {
-        $match: search
-          ? {
-              "userDetails.userId": { $regex: search, $options: "i" }, // Apply regex search on userId
-            }
-          : {}, // If no search term, don't apply any match filter
+        $match: matchQuery, // Apply search filter on userId here
       },
       {
         $project: {
