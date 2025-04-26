@@ -177,13 +177,22 @@ const taxationBotChatService = {
     };
   },
 
-  userList: async (page = 1, limit = 10) => {
+  userList: async (page = 1, limit = 10, search) => {
+    const searchQuery = search
+      ? {
+          $or: [
+            { userId: { $regex: search, $options: "i" } },
+            { username: { $regex: search, $options: "i" } },
+            { status: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
     const result = await appUserModel
-      .find()
+      .find(searchQuery)
       .sort({ created: -1 })
       .skip((page - 1) * limit) // Skip the documents for the current page
       .limit(limit); // Limit the results to the specified limit
-    const total = await appUserModel.countDocuments();
+    const total = await appUserModel.countDocuments(searchQuery);
 
     return {
       total, // Total records

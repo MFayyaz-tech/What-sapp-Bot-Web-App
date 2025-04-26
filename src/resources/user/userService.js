@@ -34,12 +34,22 @@ const userService = {
     );
   },
   get: async (page = 1, limit = 10, search) => {
+    const searchQuery = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+            { phone: { $regex: search, $options: "i" } },
+            { password: { $regex: search, $options: "i" } }, // Be cautious with searching passwords
+          ],
+        }
+      : {};
     const result = await userModel
-      .find({})
+      .find(searchQuery)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-    const total = await userModel.countDocuments();
+    const total = await userModel.countDocuments(searchQuery);
     return {
       total,
       page,
