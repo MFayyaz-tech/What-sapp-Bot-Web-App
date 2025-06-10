@@ -48,6 +48,7 @@ app.get("/whatsapp-webhook", (req, res) => {
   }
 });
 app.post("/whatsapp-webhook", async (req, res) => {
+  const start = Date.now();
   const data = req.body;
   console.log("Received Data:", JSON.stringify(data, null, 2));
 
